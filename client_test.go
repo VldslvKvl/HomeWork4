@@ -19,7 +19,7 @@ type UsersXML struct {
 }
 
 const (
-	token = 1488
+	token = 1188
 )
 
 var allowedSortFields = map[string]struct{}{
@@ -139,6 +139,23 @@ func SearchServer(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+var validRespUsr = &User{
+	Id:     27,
+	Name:   "RebekahSutton",
+	Age:    26,
+	About:  "Aliqua exercitation ad nostrud et exercitation amet quis cupidatat esse nostrud proident.",
+	Gender: "female",
+}
+var respCompare = func(r *SearchResponse) bool {
+	if r.Users[0].Id == validRespUsr.Id &&
+		r.Users[0].Age == validRespUsr.Age &&
+		r.Users[0].Gender == validRespUsr.Gender &&
+		r.Users[0].About == validRespUsr.About {
+		return true
+	}
+	fmt.Println(r.Users[0])
+	return false
+}
 var RequestList = []SearchRequest{
 	{-1, 5, "officia", "Id", 0},
 	{1, -2, "officia", "Name", 0},
@@ -148,14 +165,14 @@ var RequestList = []SearchRequest{
 	{1, 1, "", "Id", 0},
 	{26, 2, "officia", "Id", 0},
 	{25, 0, "Panda", "Id", 0},
-	{15, 0, "officia", "Id", 0},
+	{15, 0, "Sutton", "Id", 0},
 }
 
 func TestLimitOffset(T *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(SearchServer))
 	defer ts.Close()
 	var err error
-	sClient := SearchClient{"1488", ts.URL}
+	sClient := SearchClient{"1188", ts.URL}
 	for idx, req := range RequestList {
 		_, err = sClient.FindUsers(req)
 		if err != nil {
@@ -183,7 +200,7 @@ func TestTimeOut(T *testing.T) {
 	}))
 	defer ts.Close()
 	var err error
-	sClient := SearchClient{"1488", ts.URL}
+	sClient := SearchClient{"1188", ts.URL}
 	_, err = sClient.FindUsers(RequestList[2])
 	if err != nil {
 		fmt.Println(err)
@@ -194,7 +211,7 @@ func TestTimeOut(T *testing.T) {
 func TestUknownError(T *testing.T) {
 	httptest.NewServer(http.HandlerFunc(SearchServer))
 	var err error
-	sClient := SearchClient{"1488", "URL"}
+	sClient := SearchClient{"1188", "URL"}
 	_, err = sClient.FindUsers(RequestList[3])
 	if err != nil {
 		fmt.Println(err)
@@ -206,8 +223,8 @@ func TestBodyClose(T *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(SearchServer))
 	defer ts.Close()
 	var err error
-	sClient := SearchClient{"1488", ts.URL}
-	res, err := sClient.FindUsers(RequestList[3])
+	sClient := SearchClient{"1188", ts.URL}
+	res, err := sClient.FindUsers(RequestList[8])
 	if err != nil {
 		T.Fatal(err)
 	}
@@ -218,6 +235,9 @@ func TestBodyClose(T *testing.T) {
 
 	if len(res.Users) == 0 {
 		T.Fatal("expected users, got empty list")
+	}
+	if !respCompare(res) {
+		T.Fail()
 	}
 }
 func TestStatusUnauthorized(T *testing.T) {
@@ -238,7 +258,7 @@ func TestStatusInternalErr(t *testing.T) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer ts.Close()
-	sClient := SearchClient{"1488", ts.URL}
+	sClient := SearchClient{"1188", ts.URL}
 	resp, err := sClient.FindUsers(RequestList[3])
 	if err == nil {
 		t.Fatal("expected SearchServer fatal error, got nil")
@@ -253,7 +273,7 @@ func TestStatusInternalErr(t *testing.T) {
 func TestBadRequestErrBadOrdeer(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(SearchServer))
 	defer ts.Close()
-	sClient := SearchClient{"1488", ts.URL}
+	sClient := SearchClient{"1188", ts.URL}
 	resp, err := sClient.FindUsers(RequestList[4])
 	if err == nil {
 		t.Fatal("expected SearchServer fatal error, got nil")
@@ -270,7 +290,7 @@ func TestParseErr(t *testing.T) {
 		w.WriteHeader(http.StatusBadRequest)
 	}))
 	defer ts.Close()
-	sClient := SearchClient{"1488", ts.URL}
+	sClient := SearchClient{"1188", ts.URL}
 	resp, err := sClient.FindUsers(RequestList[3])
 	if err == nil {
 		t.Fatal("expected cant unpack error json error, got nil")
@@ -285,7 +305,7 @@ func TestParseErr(t *testing.T) {
 func TestValidRequest(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(SearchServer))
 	defer ts.Close()
-	sClient := SearchClient{"1488", ts.URL}
+	sClient := SearchClient{"1188", ts.URL}
 	resp, err := sClient.FindUsers(RequestList[8])
 	if err != nil {
 		fmt.Println(err)
@@ -294,11 +314,14 @@ func TestValidRequest(t *testing.T) {
 	if resp == nil {
 		t.Fatalf("expected  response, got nil")
 	}
+	if !respCompare(resp) {
+		t.Fail()
+	}
 }
 func TestSerchRequest(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(SearchServer))
 	defer ts.Close()
-	sClient := SearchClient{"1488", ts.URL}
+	sClient := SearchClient{"1188", ts.URL}
 	resp, err := sClient.FindUsers(RequestList[7])
 	if err == nil {
 		t.Fatal("expected cant unpack error json error, got nil")
